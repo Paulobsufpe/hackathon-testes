@@ -18,7 +18,7 @@ DoS. Em geral, é comum o serviço sem oferecido não intencionalmente - podendo
 
 
 137 UDP - NetBIOS
-  Na verdade, está servindo nessa porta é o nmbd, um daemon do Samba.
+  Na verdade, quem está servindo nessa porta é o nmbd, um daemon do Samba.
   Comando: sudo nmap -sU -sV -p 137 --script nbstat 200.130.38.131 -Pn
 
 445 TCP - SMB
