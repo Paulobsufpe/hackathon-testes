@@ -45,22 +45,30 @@ async def handle_get_request(addr: str):
 
     # List of commands with associated test names
     tests = {
-        # "11211 TCP/UDP - Memcached" : [ "nmap -p 11211 -sV --script memcached-info -Pn",
-        #         "Não deve nunca estar aberta, simples assim. Pode resultar até em RCE (remote code execution)."],
-        # "427 TCP/UDP - SLP": [ "nmap -p 427 -Pn", 
-        #         "DoS. Em geral, é comum o serviço sem oferecido não intencionalmente - \
-        #         podendo ser complemente desabilitado nesses casos. Se não for o caso, \
-        #         ainda pode ser configurado firewall para bloquear tcp/udp na 427, resolvendo o problema."],
-        # "161 UDP - SNMP": [ "sudo nmap -sU -sV --script 'snmp-info,snmp-netstat,snmp-sysdescr' -p 161 -Pn",
-        #         "Não deve estar aberta..."],
-        # "1900 UDP - SSDP": [ "sudo nmap -sU -p 1900 --script=upnp-info -Pn",
-        #         "Não deve estar aberta..."],
+        "11211 TCP/UDP - Memcached" : [ "nmap -p 11211 -sV --script memcached-info -Pn",
+                "Não há motivo para manter esse serviço acessível na internet. \
+                É recomendado restringir o acesso somente a própria maquina."],
+        "427 TCP/UDP - SLP": [ "nmap -p 427 -Pn", 
+                "Serviço muito sujeito a DoS (Denial of Service). É comum o serviço \
+                ser oferecido não intencionalmente, podendo ser complemente desabilitado nesses casos. \
+                Se não for o caso, ainda pode ser configurado firewall para bloquear \
+                tcp/udp na 427, resolvendo o problema."],
+        "161 UDP - SNMP": [ "sudo nmap -sU -sV --script 'snmp-info,snmp-netstat,snmp-sysdescr' -p 161 -Pn",
+                "O serviço é utilizado em redes locais, domésticas. É comum estar disponível \
+                para a internet não intencionalmente. É recomendado configurar o serviço ou firewall \
+                para restringir sua disponibilidade à rede local. (Obs.: algumas ver. sofrem de RCE)"],
+        "1900 UDP - SSDP": [ "sudo nmap -sU -p 1900 --script=upnp-info -Pn",
+                "Serviço muito sujeito a DDoS. Não é boa prática disponibilizá-lo para a internet, \
+                a menos que seja um objetivo. É recomendado configurar o servico ou firewall para \
+                restrigir o acesso. (Obs.: um ataque usando UPnP - Universal Plug and Play - \
+                pode revelar muitas informações sobre o host do serviço."],
         "3306 TCP - MySQL": [ "nmap -p 3306 -Pn -sV --script=mysql-info -T4",
-                "Não deve estar aberta!..."],
-        # "123 UDP - NTP": [ "sudo nmap -sU -p 123 --script 'ntp* and not (dos or brute)' -Pn",
-        #         "Muitas vezes pode ser desabilitado, mas não quando o objetivo for de fato \
-        #         servir a sincronização na rede local. No caso do servidor em questão, precisa \
-        #         ser atualizado. A versão disponível é antiga e vulnerável ao exploit listado."],
+                "Não é boa prática de segurança deixar um banco de dados acessível amplamente. \
+                É recomendado limitar dentro do possível."],
+        "123 UDP - NTP": [ "sudo nmap -sU -p 123 --script 'ntp* and not (dos or brute)' -Pn",
+                "Muitas vezes pode ser desabilitado, mas não quando o objetivo for de fato \
+                servir a sincronização na rede local. No caso do servidor em questão, precisa \
+                ser atualizado. A versão disponível é antiga e vulnerável ao exploit listado."],
     }
     
     # Run the tests in parallel and collect the results
@@ -101,7 +109,8 @@ async def handle_get_request(addr: str):
             pass
 
         script = out.find('host').find('ports').find('port').find('script')
-        print(etree.tostring(script))
+        if script != None:
+            print(etree.tostring(script))
         
         port = result['test_name']
         report = "Em geral, esta porta não precisa estar disponível para a internet, \
