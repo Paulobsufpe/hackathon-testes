@@ -45,22 +45,22 @@ async def handle_get_request(addr: str):
 
     # List of commands with associated test names
     tests = {
-        "11211 TCP/UDP - Memcached" : [ "nmap -p 11211 -sV --script memcached-info 200.130.38.131 -Pn -oX -",
-                "Não deve nunca estar aberta, simples assim. Pode resultar até em RCE (remote code execution)."],
-        "427 TCP/UDP - SLP": [ "nmap 200.130.38.131 -p 427 -Pn -oX -", 
-                "DoS. Em geral, é comum o serviço sem oferecido não intencionalmente - \
-                podendo ser complemente desabilitado nesses casos. Se não for o caso, \
-                ainda pode ser configurado firewall para bloquear tcp/udp na 427, resolvendo o problema."],
-        "161 UDP - SNMP": [ "sudo nmap -sU -sV --script 'snmp-info,snmp-netstat,snmp-sysdescr' 200.130.38.131 -p 161 -Pn -oX -",
-                "Não deve estar aberta..."],
-        "1900 UDP - SSDP": [ "sudo nmap -sU -p 1900 --script=upnp-info 200.130.38.131 -Pn -oX -",
-                "Não deve estar aberta..."],
-        "3306 TCP - MySQL": [ "nmap -p 3306 200.130.38.131 -Pn -oX -",
+        # "11211 TCP/UDP - Memcached" : [ "nmap -p 11211 -sV --script memcached-info -Pn",
+        #         "Não deve nunca estar aberta, simples assim. Pode resultar até em RCE (remote code execution)."],
+        # "427 TCP/UDP - SLP": [ "nmap -p 427 -Pn", 
+        #         "DoS. Em geral, é comum o serviço sem oferecido não intencionalmente - \
+        #         podendo ser complemente desabilitado nesses casos. Se não for o caso, \
+        #         ainda pode ser configurado firewall para bloquear tcp/udp na 427, resolvendo o problema."],
+        # "161 UDP - SNMP": [ "sudo nmap -sU -sV --script 'snmp-info,snmp-netstat,snmp-sysdescr' -p 161 -Pn",
+        #         "Não deve estar aberta..."],
+        # "1900 UDP - SSDP": [ "sudo nmap -sU -p 1900 --script=upnp-info -Pn",
+        #         "Não deve estar aberta..."],
+        "3306 TCP - MySQL": [ "nmap -p 3306 -Pn -sV --script=mysql-info -T4",
                 "Não deve estar aberta!..."],
-        "123 UDP - NTP": [ "sudo nmap -sU -p 123 --script 'ntp* and not (dos or brute)' 200.130.38.131 -Pn -oX -",
-                "Muitas vezes pode ser desabilitado, mas não quando o objetivo for de fato \
-                servir a sincronização na rede local. No caso do servidor em questão, precisa \
-                ser atualizado. A versão disponível é antiga e vulnerável ao exploit listado."],
+        # "123 UDP - NTP": [ "sudo nmap -sU -p 123 --script 'ntp* and not (dos or brute)' -Pn",
+        #         "Muitas vezes pode ser desabilitado, mas não quando o objetivo for de fato \
+        #         servir a sincronização na rede local. No caso do servidor em questão, precisa \
+        #         ser atualizado. A versão disponível é antiga e vulnerável ao exploit listado."],
     }
     
     # Run the tests in parallel and collect the results
@@ -70,7 +70,7 @@ async def handle_get_request(addr: str):
     with concurrent.futures.ThreadPoolExecutor() as executor:
         # Submit each test to be executed in parallel
         for test_name, [cmd, desc] in tests.items():
-            future = executor.submit(run_command, test_name, cmd, desc)
+            future = executor.submit(run_command, test_name, cmd + ' ' + addr + ' -oX -', desc)
             futures.append(future)
         
         # Collect the results as they complete
@@ -87,7 +87,7 @@ async def handle_get_request(addr: str):
         # print(f"Error: {result['error']}")
         # print(f"Return Code: {result['returncode']}")
         # print("-" * 40)
-        print(result['output'])
+        # print(result['output'])
         result['output'] = etree.fromstring(bytes(result['output'], 'utf8'))
         out = result['output']
         is_up = out.find('host').find('status').get('state') == "up"
@@ -99,14 +99,16 @@ async def handle_get_request(addr: str):
               result['test_name'] == '3306 TCP - MySQL' or
               result['test_name'] == '123 UDP - NTP'):
             pass
+
+        script = out.find('host').find('ports').find('port').find('script')
+        print(etree.tostring(script))
         
         port = result['test_name']
-        report: str = ""
-        report += "Em geral, esta port não precisa estar disponível para a internet, \
+        report = "Em geral, esta porta não precisa estar disponível para a internet, \
             a menos de situações muito específicas. É recomendado desabilitar o serviço ou \
-            configurar um bloqueio no firewall."
+            configurar um bloqueio no firewall. " + result['desc']
 
-        vulns.append({"date": f"{datetime.date.today()} {datetime.datetime.now()}", 
+        vulns.append({"date": f"{datetime.datetime.now()}", 
                       "addr": addr, "port": port, "report": report})
 
     return vulns

@@ -55,6 +55,7 @@ Não deve estar aberta...
 
 
 3306 TCP - MySQL
+https://www.tenable.com/plugins/nessus/193568
 https://www.blackpanda.com/ir1-resources/exposed-mysql
 https://zenstack.dev/blog/database-to-the-public
 https://www.securityweek.com/scanning-finds-over-36-million-internet-accessible-mysql-servers/

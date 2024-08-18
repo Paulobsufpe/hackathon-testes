@@ -35,7 +35,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                     const desc = document.createElement("td");
                     desc.textContent = item.report;
-                    row.appendChild(porta);
+                    row.appendChild(desc);
 
                     tableBody.appendChild(row);
                 });
