@@ -1,0 +1,75 @@
+/* Define a div1 para ocupar toda a tela */
+.div1 {
+    width: 100vw; /* 100% da largura da viewport */
+    height: 100vh; /* 100% da altura da viewport */
+    background-color: #e0e0e0; /* Cor de fundo para visualização */
+}
+
+/* Estilos específicos para a div2 */
+.div2 {
+    display: flex;
+    justify-content: space-between; /* Espaça os itens para os cantos opostos */
+    align-items: center; /* Centraliza verticalmente os itens */
+    height: 105px; /* Ajuste conforme necessário */
+    background-color: #8898F2; /* Cor de fundo para visualização */
+    padding: 10px; /* Espaçamento interno */
+    position: relative; /* Necessário para posicionamento absoluto da logo */
+}
+
+/* Estilos específicos para a div3 */
+/* Estilos específicos para a div3 */
+.div3 {
+    display: flex;
+    align-items: center; /* Centraliza verticalmente os itens */
+    gap: 10px; /* Espaçamento entre os itens */
+    height: 63.94px; /* Ajuste conforme necessário */
+    background-color: #0528F2; /* Cor de fundo diferente para visualização */
+    padding: 10px; /* Espaçamento interno */
+}
+
+/* Estilos para a logo */
+.logo {
+    position: absolute; /* Permite posicionamento dentro da div2 */
+    top: 50%; /* Centraliza verticalmente dentro da div2 */
+    right: 20px; /* Posiciona no canto direito da div2 */
+    transform: translateY(-50%); /* Ajuste de centralização vertical */
+    max-height: 80px; /* Ajuste o tamanho da logo conforme necessário */
+    width: auto; /* Mantém a proporção da imagem */
+}
+
+/* Estilos para a entrada do usuário */
+.user-input {
+    display: flex;
+    align-items: center; /* Centraliza verticalmente o texto e a caixa de entrada */
+    gap: 10px; /* Espaçamento entre o texto e a caixa de entrada */
+}
+
+label {
+    font-size: 16px; /* Tamanho da fonte do texto */
+    color: #fff; /* Cor do texto */
+}
+
+input[type="text"] {
+    padding: 5px; /* Espaçamento interno da caixa de entrada */
+    font-size: 16px; /* Tamanho da fonte da caixa de entrada */
+}
+
+ 
+#interactiveTable {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  #interactiveTable th, #interactiveTable td {
+    border: 1px solid #ddd;
+    padding: 8px;
+  }
+  
+  #interactiveTable th {
+    background-color: #f2f2f2;
+    position: sticky;
+    top: 0;
+  }
+    });
+  });        
+   

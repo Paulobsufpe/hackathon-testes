@@ -3,8 +3,27 @@ import socket
 
 import subprocess
 import concurrent.futures
+import datetime
 
 from lxml import etree
+
+from fastapi.middleware.cors import CORSMiddleware
+
+origins = [
+    "http://localhost",
+    "http://localhost:8080",
+    "http://localhost:8000",
+]
+
+app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Function to run a command and capture its output
 def run_command(test_name, cmd, desc):
@@ -16,8 +35,6 @@ def run_command(test_name, cmd, desc):
                 "desc": desc}
     except Exception as e:
         return {"test_name": test_name, "error": str(e), "returncode": -1}
-
-app = FastAPI()
 
 @app.get("/api")
 async def handle_get_request(addr: str):
@@ -61,6 +78,7 @@ async def handle_get_request(addr: str):
             result = future.result()
             results.append(result)
     
+    vulns=[]
     # Print the final report
     for result in results:
         # print(f"Test Name: {result['test_name']}")
@@ -72,16 +90,24 @@ async def handle_get_request(addr: str):
         print(result['output'])
         result['output'] = etree.fromstring(bytes(result['output'], 'utf8'))
         out = result['output']
-        if out.find('host').find('status').get('state') == "up" and \
-            (result['test_name'] == '11211 TCP/UDP - Memcached' or
-             result['test_name'] == '427 TCP/UDP - SLP' or
-             result['test_name'] == '161 UDP - SNMP' or
-             result['test_name'] == '1900 UDP - SSDP' or
-             result['test_name'] == '3306 TCP - MySQL' or
-             result['test_name'] == '123 UDP - NTP'):
+        is_up = out.find('host').find('status').get('state') == "up"
+        if not is_up: continue
+        if (result['test_name'] == '11211 TCP/UDP - Memcached' or
+              result['test_name'] == '427 TCP/UDP - SLP' or
+              result['test_name'] == '161 UDP - SNMP' or
+              result['test_name'] == '1900 UDP - SSDP' or
+              result['test_name'] == '3306 TCP - MySQL' or
+              result['test_name'] == '123 UDP - NTP'):
+            pass
         
-            print(f"{result['test_name'].split(' ')[1]} => {result['desc']}")
-        
-    
-    return {addr: "Parameters received successfully!"}
+        port = result['test_name']
+        report: str = ""
+        report += "Em geral, esta port não precisa estar disponível para a internet, \
+            a menos de situações muito específicas. É recomendado desabilitar o serviço ou \
+            configurar um bloqueio no firewall."
+
+        vulns.append({"date": f"{datetime.date.today()} {datetime.datetime.now()}", 
+                      "addr": addr, "port": port, "report": report})
+
+    return vulns
 
