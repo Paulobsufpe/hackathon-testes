@@ -1,0 +1,87 @@
+11211 TCP/UDP - Memcached
+https://www.digitalocean.com/community/tutorials/how-to-secure-memcached-by-reducing-exposure
+https://blog.cloudflare.com/memcrashed-major-amplification-attacks-from-port-11211/
+https://beaglesecurity.com/blog/vulnerability/memecached-injection.html
+
+Comando: nmap -p 11211 -sV --script memcached-info 200.130.38.131 -Pn
+Não deve nunca estar aberta, simples assim. Pode resultar até em RCE (remote code execution).
+
+
+427 TCP/UDP - SLP
+https://curesec.com/blog/article/CVE-2023-29552-Service-Location-Protocol-Denial-of-Service-Amplification-Attack-212.html
+https://github.com/curesec/slpload
+https://nvd.nist.gov/vuln/detail/CVE-2023-29552
+https://www.bitsight.com/blog/new-high-severity-vulnerability-cve-2023-29552-discovered-service-location-protocol-slp
+
+Comando: nmap 200.130.38.131 -p 427 -Pn
+DoS. Em geral, é comum o serviço sem oferecido não intencionalmente - podendo ser complemente desabilitado nesses casos. Se não for o caso, ainda pode ser configurado firewall para bloquear tcp/udp na 427, resolvendo o problema.
+
+
+137 UDP - NetBIOS
+  Na verdade, está servindo nessa porta é o nmbd, um daemon do Samba.
+  Comando: sudo nmap -sU -sV -p 137 --script nbstat 200.130.38.131 -Pn
+
+445 TCP - SMB
+https://www.exploit-db.com/exploits/42060
+https://jfrog.com/blog/cve-2021-44142-critical-samba-vulnerability-allows-remote-code-execution/
+
+Comando: nmap -sV -p 445 200.130.38.131 -Pn
+Não deve estar aberto para internet, funcionando apenas na rede local. As portas não devem estar visíveis para toda a internet, seja a partir de uma configuração do Samba ou do firewall.
+
+
+6379 TCP - Redis
+https://nvd.nist.gov/vuln/detail/CVE-2023-41056
+https://www.cvedetails.com/cve/CVE-2023-41056/
+https://redis.io/docs/latest/operate/rs/release-notes/rs-7-2-4-releases/rs-7-2-4-52/
+
+Comando: nmap -sV 200.130.38.131 -p 6379 -Pn
+Tem algumas vulnerabilidades graves nas últimas versões. De toda forma, em geral, não faz sentido que fique esposto para internet. Deve ser retirado de disponibilidade para fora via configuração do Redis mesmo, ou firewall.
+
+
+161 UDP - SNMP
+https://book.hacktricks.xyz/network-services-pentesting/pentesting-snmp/snmp-rce
+https://nvd.nist.gov/vuln/detail/CVE-2017-6742
+
+Comando: sudo nmap -sV -sU --script "snmp-info,snmp-netstat,snmp-sysdescr" 200.130.38.131 -p 161 -Pn
+Não deve estar aberta...
+
+
+1900 UDP - SSDP
+https://blog.cloudflare.com/ssdp-100gbps/
+https://book.hacktricks.xyz/generic-methodologies-and-resources/pentesting-network/spoofing-ssdp-and-upnp-devices
+
+Comando: sudo nmap -p 1900 200.130.38.131 -Pn -sU
+Não deve estar aberta...
+
+
+3306 TCP - MySQL
+https://www.blackpanda.com/ir1-resources/exposed-mysql
+https://zenstack.dev/blog/database-to-the-public
+https://www.securityweek.com/scanning-finds-over-36-million-internet-accessible-mysql-servers/
+
+Comando: nmap -p 3306 200.130.38.131 -Pn
+Não deve estar aberta!...
+
+
+53 UDP - DNS
+https://nvd.nist.gov/vuln/detail/CVE-2016-9444
+https://nvd.nist.gov/vuln/detail/CVE-2016-9131
+https://nvd.nist.gov/vuln/detail/CVE-2016-8864
+https://nvd.nist.gov/vuln/detail/CVE-2021-25215
+
+Comando (Linux): dig @200.130.38.131 example.com
+Na maioria dos casos, não precisa estar sendo servido e pode ser desabilitado. Em geral, UDP aberta para a internet não é uma boa ideia:
+
+"Developers
+
+Please please please: Stop using UDP. If you must, please don't enable it by default. If you do not know what an amplification attack is I hereby forbid you from ever typing SOCK_DGRAM into your editor.
+
+We've been down this road so many times. DNS, NTP, Chargen, SSDP and now memcached. If you use UDP, you must always respond with strictly a smaller packet size then the request. Otherwise your protocol will be abused. Also remember that people do forget to set up a firewall. Be a nice citizen. Don't invent a UDP-based protocol that lacks authentication of any kind." (https://blog.cloudflare.com/memcrashed-major-amplification-attacks-from-port-11211/)
+
+
+123 UDP - NTP
+https://www.cvedetails.com/cve/CVE-2015-7855/
+https://www.exploit-db.com/exploits/40840
+
+Comando: sudo nmap -sU -p 123 --script "ntp* and not (dos or brute)" 200.130.38.131 -Pn
+Muitas vezes pode ser desabilitado, mas não quando o objetivo for de fato servir a sincronização na rede local. No caso do servidor em questão, precisa ser atualizado. A versão disponível é antiga e vulnerável ao exploit listado.
