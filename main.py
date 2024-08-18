@@ -47,7 +47,7 @@ async def handle_get_request(addr: str):
     tests = {
         "11211 TCP/UDP - Memcached" : [ "nmap -p 11211 -sV --script memcached-info -Pn",
                 "Não há motivo para manter esse serviço acessível na internet. \
-                É recomendado restringir o acesso somente a própria maquina."],
+                Neste caso, é recomendado restringir o acesso somente a própria maquina."],
         "427 TCP/UDP - SLP": [ "nmap -p 427 -Pn", 
                 "Serviço muito sujeito a DoS (Denial of Service). É comum o serviço \
                 ser oferecido não intencionalmente, podendo ser complemente desabilitado nesses casos. \
@@ -61,14 +61,31 @@ async def handle_get_request(addr: str):
                 "Serviço muito sujeito a DDoS. Não é boa prática disponibilizá-lo para a internet, \
                 a menos que seja um objetivo. É recomendado configurar o servico ou firewall para \
                 restrigir o acesso. (Obs.: um ataque usando UPnP - Universal Plug and Play - \
-                pode revelar muitas informações sobre o host do serviço."],
+                pode revelar muitas informações sobre o host do serviço.)"],
         "3306 TCP - MySQL": [ "nmap -p 3306 -Pn -sV --script=mysql-info -T4",
                 "Não é boa prática de segurança deixar um banco de dados acessível amplamente. \
                 É recomendado limitar dentro do possível."],
         "123 UDP - NTP": [ "sudo nmap -sU -p 123 --script 'ntp* and not (dos or brute)' -Pn",
-                "Muitas vezes pode ser desabilitado, mas não quando o objetivo for de fato \
+                "Não pode ser desabilitado quando o objetivo for de fato \
                 servir a sincronização na rede local. No caso do servidor em questão, precisa \
-                ser atualizado. A versão disponível é antiga e vulnerável ao exploit listado."],
+                ser atualizado. A versão disponível é antiga e vulnerável ao exploit listado."], # TODO: fix this 
+        "53 UDP - DNS": [ "sudo nmap -p 53 --script dns-recursion -Pn -sV -sU",
+                "Muitas vezes pode ser desabilitado, mas não quando o objetivo for de fato \
+                fazer resoluções de nomes de domínio na rede local. De toda forma, não precisa \
+                estar disponível para toda a internet, podendo ser configurado ou bloqueado com firewall"],
+        "6379 TCP - Redis": [ "nmap -sV -p 6379 --script redis-info -Pn",
+                "Tem algumas vulnerabilidades graves nas últimas versões. De toda forma, em geral, \
+                não faz sentido que fique esposto para internet. Deve ser retirado de disponibilidade \
+                para fora via configuração do Redis mesmo, ou firewall."],
+        "445 TCP - SMB": [ "nmap -sV -p 445 -Pn",
+                "Não deve estar aberto para internet, funcionando apenas na rede local. \
+                As portas não devem estar visíveis para toda a internet, seja a partir de uma \
+                configuração do Samba ou do firewall."],
+        "137 UDP - NetBIOS": [ "sudo nmap -sU -sV -p 137 --script nbstat -Pn",
+                "Não deve estar aberto para internet, funcionando apenas na rede local. \
+                Não deve estar aberto para internet, funcionando apenas na rede local. \
+                As portas não devem estar visíveis para toda a internet, seja a partir de \
+                uma configuração do Samba ou do firewall."],
     }
     
     # Run the tests in parallel and collect the results
@@ -100,22 +117,31 @@ async def handle_get_request(addr: str):
         out = result['output']
         is_up = out.find('host').find('status').get('state') == "up"
         if not is_up: continue
-        if (result['test_name'] == '11211 TCP/UDP - Memcached' or
+        report = ""
+        port = result['test_name']
+        if (port == '11211 TCP/UDP - Memcached' or
               result['test_name'] == '427 TCP/UDP - SLP' or
               result['test_name'] == '161 UDP - SNMP' or
               result['test_name'] == '1900 UDP - SSDP' or
               result['test_name'] == '3306 TCP - MySQL' or
               result['test_name'] == '123 UDP - NTP'):
-            pass
+            report = report + "Em geral, esta porta não precisa estar disponível para a internet, \
+                a menos de situações muito específicas. É recomendado desabilitar o serviço ou \
+                configurar um bloqueio no firewall. "
+        elif test_name == '53 UDP - DNS':
+            res = subprocess.run("dig @" + addr + "example.com", shell=True, text=True, capture_output=True)
+            if len(res.stdout) > 1:
+                report = report + "Esse servidor DNS está respondendo para a internet. \
+                    Grande potencial de DoS!"
+        
+        report = report + result['desc'] + ' '
 
         script = out.find('host').find('ports').find('port').find('script')
         if script != None:
-            print(etree.tostring(script))
-        
-        port = result['test_name']
-        report = "Em geral, esta porta não precisa estar disponível para a internet, \
-            a menos de situações muito específicas. É recomendado desabilitar o serviço ou \
-            configurar um bloqueio no firewall. " + result['desc']
+            report = report + f"Importante: o serviço é vulnerável a um script nmap ({script.get('id')}) \
+                que pode vazar informações relevantes sobre a máquina. PERIGOSO"
+
+        # if result['test_name'] == '3306 TCP - MySQL' and 
 
         vulns.append({"date": f"{datetime.datetime.now()}", 
                       "addr": addr, "port": port, "report": report})
