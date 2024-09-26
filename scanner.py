@@ -109,6 +109,7 @@ async def handle_get_request(addr: str) -> list[dict[str, str]]:
             result = future.result()
             results.append(result)
 
+    # NOTE: checkar se as portas estão abertas antes de notificar qualquer coisa
     vulns: list[dict[str, str]] = []
     # Print the final report
     for result in results:
