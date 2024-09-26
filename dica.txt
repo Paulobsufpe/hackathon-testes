@@ -1,0 +1,6 @@
+snmp
+
+editar /etc/snmp.conf
+
+alterar a zona pública, restringindo consultas para rede local
+
